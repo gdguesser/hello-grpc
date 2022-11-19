@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"hello/grpc/pb"
+	"hello/grpc/pb/proto/v1"
 	"log"
 
 	"google.golang.org/grpc"
@@ -15,9 +15,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	client := pb.NewHelloClient(conn)
+	client := pb.NewHelloServiceClient(conn)
 
-	req := &pb.HelloRequest{
+	req := &pb.SayHelloRequest{
 		Name: "John Doe",
 	}
 

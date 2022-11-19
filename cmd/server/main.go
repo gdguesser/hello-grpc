@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"hello/grpc/pb"
+	"hello/grpc/pb/proto/v1"
 	"log"
 	"net"
 
@@ -10,11 +10,11 @@ import (
 )
 
 type Server struct {
-	pb.UnimplementedHelloServer
+	pb.UnimplementedHelloServiceServer
 }
 
-func (s *Server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloResponse, error) {
-	return &pb.HelloResponse{Message: "Hello, " + in.GetName()}, nil
+func (s *Server) SayHello(ctx context.Context, in *pb.SayHelloRequest) (*pb.SayHelloResponse, error) {
+	return &pb.SayHelloResponse{Message: "Hello, " + in.GetName()}, nil
 }
 
 func main() {
@@ -26,7 +26,7 @@ func main() {
 	}
 
 	s := grpc.NewServer()
-	pb.RegisterHelloServer(s, &Server{})
+	pb.RegisterHelloServiceServer(s, &Server{})
 	if err := s.Serve(listener); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
