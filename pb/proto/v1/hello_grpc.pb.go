@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type HelloServiceClient interface {
 	SayHello(ctx context.Context, in *SayHelloRequest, opts ...grpc.CallOption) (*SayHelloResponse, error)
+	BeatsPerMinute(ctx context.Context, in *BeatsPerMinuteRequest, opts ...grpc.CallOption) (HelloService_BeatsPerMinuteClient, error)
 }
 
 type helloServiceClient struct {
@@ -42,11 +43,44 @@ func (c *helloServiceClient) SayHello(ctx context.Context, in *SayHelloRequest, 
 	return out, nil
 }
 
+func (c *helloServiceClient) BeatsPerMinute(ctx context.Context, in *BeatsPerMinuteRequest, opts ...grpc.CallOption) (HelloService_BeatsPerMinuteClient, error) {
+	stream, err := c.cc.NewStream(ctx, &HelloService_ServiceDesc.Streams[0], "/proto.v1.HelloService/BeatsPerMinute", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &helloServiceBeatsPerMinuteClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type HelloService_BeatsPerMinuteClient interface {
+	Recv() (*BeatsPerMinuteResponse, error)
+	grpc.ClientStream
+}
+
+type helloServiceBeatsPerMinuteClient struct {
+	grpc.ClientStream
+}
+
+func (x *helloServiceBeatsPerMinuteClient) Recv() (*BeatsPerMinuteResponse, error) {
+	m := new(BeatsPerMinuteResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // HelloServiceServer is the server API for HelloService service.
 // All implementations should embed UnimplementedHelloServiceServer
 // for forward compatibility
 type HelloServiceServer interface {
 	SayHello(context.Context, *SayHelloRequest) (*SayHelloResponse, error)
+	BeatsPerMinute(*BeatsPerMinuteRequest, HelloService_BeatsPerMinuteServer) error
 }
 
 // UnimplementedHelloServiceServer should be embedded to have forward compatible implementations.
@@ -55,6 +89,9 @@ type UnimplementedHelloServiceServer struct {
 
 func (UnimplementedHelloServiceServer) SayHello(context.Context, *SayHelloRequest) (*SayHelloResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SayHello not implemented")
+}
+func (UnimplementedHelloServiceServer) BeatsPerMinute(*BeatsPerMinuteRequest, HelloService_BeatsPerMinuteServer) error {
+	return status.Errorf(codes.Unimplemented, "method BeatsPerMinute not implemented")
 }
 
 // UnsafeHelloServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -86,6 +123,27 @@ func _HelloService_SayHello_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _HelloService_BeatsPerMinute_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(BeatsPerMinuteRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(HelloServiceServer).BeatsPerMinute(m, &helloServiceBeatsPerMinuteServer{stream})
+}
+
+type HelloService_BeatsPerMinuteServer interface {
+	Send(*BeatsPerMinuteResponse) error
+	grpc.ServerStream
+}
+
+type helloServiceBeatsPerMinuteServer struct {
+	grpc.ServerStream
+}
+
+func (x *helloServiceBeatsPerMinuteServer) Send(m *BeatsPerMinuteResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // HelloService_ServiceDesc is the grpc.ServiceDesc for HelloService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -98,6 +156,12 @@ var HelloService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _HelloService_SayHello_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "BeatsPerMinute",
+			Handler:       _HelloService_BeatsPerMinute_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "proto/v1/hello.proto",
 }
